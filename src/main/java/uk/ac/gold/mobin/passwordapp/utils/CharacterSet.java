@@ -19,9 +19,9 @@ public class CharacterSet {
         return "@#$%";
     }
 
-    // Builds the allowed character set based on CLI flags
-    static String build(boolean includeUpper, boolean includeLower,
-                        boolean includeDigits, boolean includeSymbols) {
+    // Build the allowed pool from CLI flags (public so PasswordApp can compute pool size)
+    public static String build(boolean includeUpper, boolean includeLower,
+                               boolean includeDigits, boolean includeSymbols) {
 
         StringBuilder sb = new StringBuilder();
 

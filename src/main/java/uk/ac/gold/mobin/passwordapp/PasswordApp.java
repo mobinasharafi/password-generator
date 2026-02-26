@@ -1,6 +1,8 @@
 package uk.ac.gold.mobin.passwordapp;
 
+import uk.ac.gold.mobin.passwordapp.utils.CharacterSet;
 import uk.ac.gold.mobin.passwordapp.utils.Generator;
+import uk.ac.gold.mobin.passwordapp.utils.StrengthEvaluator;
 import org.apache.commons.cli.*;
 
 public class PasswordApp {
@@ -22,6 +24,11 @@ public class PasswordApp {
                 .hasArg(true)
                 .argName("number")
                 .desc("Number of passwords to generate (default: 1)")
+                .build());
+
+        options.addOption(Option.builder()
+                .longOpt("strength")
+                .desc("Print strength rating and estimated entropy")
                 .build());
 
         // Character set exclusions
@@ -54,6 +61,8 @@ public class PasswordApp {
         boolean requireDigit = false;
         boolean requireSymbol = false;
 
+        boolean showStrength = false;
+
         try {
             CommandLine cmd = parser.parse(options, args);
 
@@ -69,6 +78,8 @@ public class PasswordApp {
             if (cmd.hasOption("n")) {
                 count = Integer.parseInt(cmd.getOptionValue("n"));
             }
+
+            showStrength = cmd.hasOption("strength");
 
             // Apply inclusion/exclusion flags
             if (cmd.hasOption("no-upper")) includeUpper = false;
@@ -101,13 +112,24 @@ public class PasswordApp {
                 throw new IllegalArgumentException("Length is too small for the required character classes.");
             }
 
+            String allowedChars = CharacterSet.build(includeUpper, includeLower, includeDigits, includeSymbols);
+            int poolSize = allowedChars.length();
+
             Generator generator = new Generator(
                     includeUpper, includeLower, includeDigits, includeSymbols,
                     requireUpper, requireLower, requireDigit, requireSymbol
             );
 
             for (int i = 0; i < count; i++) {
-                System.out.println(generator.generate(length));
+                String password = generator.generate(length);
+                System.out.println(password);
+
+                // Strength is a quick heuristic based on entropy from the allowed pool
+                if (showStrength) {
+                    StrengthEvaluator.StrengthResult result = StrengthEvaluator.evaluate(password, poolSize);
+                    System.out.printf("Strength: %s (Entropy: %.1f bits)%n",
+                            result.level(), result.entropyBits());
+                }
             }
 
         } catch (Exception e) {

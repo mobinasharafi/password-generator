@@ -1,30 +1,44 @@
 package uk.ac.gold.mobin.passwordapp;
 
 import uk.ac.gold.mobin.passwordapp.utils.Generator;
+import org.apache.commons.cli.*;
 
 public class PasswordApp {
 
     public static void main(String[] args) {
 
+        Options options = new Options();
+
+        Option lengthOption = Option.builder("l")
+                .longOpt("length")
+                .hasArg(true)
+                .argName("number")
+                .desc("Length of the password")
+                .required(false)
+                .build();
+
+        options.addOption(lengthOption);
+
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+
         int passwordLength = 10;
 
-        // Parse command-line argument if provided
-        if (args.length == 1) {
-            try {
-                passwordLength = Integer.parseInt(args[0]);
-            } catch (NumberFormatException e) {
-                System.err.println("Argument " + args[0] + " must be an integer.");
-                System.exit(1);
+        try {
+            CommandLine cmd = parser.parse(options, args);
+
+            if (cmd.hasOption("l")) {
+                passwordLength = Integer.parseInt(cmd.getOptionValue("l"));
             }
+
+        } catch (Exception e) {
+            formatter.printHelp("password-generator", options);
+            System.exit(1);
         }
 
-        // Create generator
         Generator generator = new Generator();
-
-        // Generate password
         String password = generator.generate(passwordLength);
 
-        // Print result
         System.out.println("Generated password (" + passwordLength + " chars): " + password);
     }
 }
